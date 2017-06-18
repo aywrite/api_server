@@ -8,15 +8,33 @@ import (
 	"net/http"
 )
 
+func jsonError(w http.ResponseWriter, e error) error {
+	switch e.(type) {
+	case Failure:
+		f := e.(Failure)
+		return f.jsonResponse(w)
+	default:
+		return Failure{
+			code: http.StatusInternalServerError,
+			ErrorCode: "UnknownError",
+			Message: "unknown error occured",
+		}.jsonResponse(w)
+	}
+}
+
 {{range .}}
 // Handler for {{.Name}} [{{.Method}} {{.Pattern}}]
 func {{.HandlerFunc}}(w http.ResponseWriter, r *http.Request) {
     var params *{{.Params}} = &{{.Params}}{}
     err := decodeAndValidate(r, params)
 	if err != nil {
-		jsonResponse(w, http.StatusBadRequest, err)
+		_ = jsonError(w, err)
     } else {
-		jsonResponse(w, http.StatusOK, "{{.Name}} ok")
+		s := Success{
+			code: http.StatusOK,
+			Result: "{{.Name}} ok",
+		}
+		_ = s.jsonResponse(w)
 	}
 }
 {{end}}
