@@ -6,7 +6,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"./mapstructure"
+	"fmt"
+	"gopkg.in/validator.v2"
 )
 
 var (
@@ -44,6 +45,18 @@ func (s Success) jsonResponse(w http.ResponseWriter) error {
 	return encoder.Encode(s)
 }
 
+func jsonError(w http.ResponseWriter, e error) error {
+	f, ok := e.(Failure)
+	if !ok {
+		return Failure{
+			code: http.StatusInternalServerError,
+			ErrorCode: "UnknownError",
+			Message: "unknown error occured",
+		}.jsonResponse(w)
+	}
+	return f.jsonResponse(w)
+}
+
 func (f Failure) jsonResponse(w http.ResponseWriter) error {
 	f.Status = "error"
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -52,41 +65,41 @@ func (f Failure) jsonResponse(w http.ResponseWriter) error {
 	return encoder.Encode(f)
 }
 
-// return a struct which has some kind of json method in it
-// should be two structs, one for errors, one for successes
+func decodingError(err error) error {
+		log.Print(err)
+		switch e := err.(type) {
+		case *json.UnmarshalTypeError:
+			return Failure{
+				code: http.StatusBadRequest,
+				ErrorCode: "BadJson",
+				Message: fmt.Sprintf("invalid type for parameter '%s': expected type '%v' got '%s'", e.Field, e.Type, e.Value),
+			}
+		case *json.SyntaxError:
+			return Failure{
+				code: http.StatusBadRequest,
+				ErrorCode: "BadJson",
+				Message: "Request json missing or malformed",
+			}
+		default:
+			return err
+		}
+}
+
 func decodeAndValidate(r *http.Request, params EndpointParams) error {
-	var body map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		log.Print(err)
-		f := Failure{
-			code: http.StatusBadRequest,
-			ErrorCode: "BadJson",
-			Message: "Request json missing or malformed",
-		}
-		return f
-	}
-	if err := mapstructure.Decode(body, params); err != nil {
-		log.Print(err)
-		f := Failure{
-			code: http.StatusBadRequest,
-			ErrorCode: "InvalidJson",
-			Message: err,
-		}
-		return f
+	if err := json.NewDecoder(r.Body).Decode(params); err != nil {
+		return decodingError(err)
 	}
 	defer r.Body.Close()
-	if err := params.Validate(r); err != nil {
-		log.Print(err)
-		f := Failure{
+	if errs := validator.Validate(params); errs != nil {
+		log.Print(errs)
+		return Failure{
 			code: http.StatusBadRequest,
 			ErrorCode: "InvalidJson",
-			Message: err,
+			Message: errs,
 		}
-		return f
 	}
 	return nil
 }
-
 
 func main() {
 	router := NewRouter()

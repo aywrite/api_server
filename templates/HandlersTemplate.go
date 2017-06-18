@@ -8,19 +8,6 @@ import (
 	"net/http"
 )
 
-func jsonError(w http.ResponseWriter, e error) error {
-	switch e.(type) {
-	case Failure:
-		f := e.(Failure)
-		return f.jsonResponse(w)
-	default:
-		return Failure{
-			code: http.StatusInternalServerError,
-			ErrorCode: "UnknownError",
-			Message: "unknown error occured",
-		}.jsonResponse(w)
-	}
-}
 
 {{range .}}
 // Handler for {{.Name}} [{{.Method}} {{.Pattern}}]

@@ -20,20 +20,6 @@ type Route struct {
 	Params      interface{}
 }
 
-type Index struct {
-	Name string
-}
-
-type User struct {
-	Name string
-	Age  int
-}
-
-type Project struct {
-	Name  string
-	Price float32
-}
-
 type Routes []Route
 
 func ParseRoutes() Routes {
