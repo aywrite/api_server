@@ -1,5 +1,17 @@
 package main
 
+type Config struct {
+	Host string
+	Port string
+}
+
+func ParseConfig() Config {
+	return Config{
+		"",
+		"8080",
+	}
+}
+
 type Route struct {
 	Name        string
 	Method      string
