@@ -12,6 +12,6 @@ type User struct {
 
 type Project struct {
 	Name  string  `json:"name"  validate:"nonzero, min=4, max=150"`
-	Price float64 `json:"price"  validate:"min=0"`
+	Price JSONInt `json:"price"  validate:"optmin=10"`
 	User  User    `json:"user"  validate:"nonzero"`
 }

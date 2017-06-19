@@ -102,6 +102,7 @@ func decodeAndValidate(r *http.Request, params EndpointParams) error {
 }
 
 func main() {
+	registerCustomValidators()
 	router := NewRouter()
 	http.ListenAndServe("{{.Host}}:{{.Port}}", router)
 }

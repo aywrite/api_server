@@ -44,6 +44,21 @@ func buildTypes(r Routes, c Config) {
 	}
 }
 
+func buildJSONTypes(r Routes, c Config) {
+	var typesTemplate *template.Template
+	typesTemplate = template.Must(
+		template.ParseFiles("./templates/JSONTypesTemplate.go"),
+	)
+	f, err := os.Create(filepath.Join(c.Location, "/JSONtypes.go"))
+	if err != nil {
+		log.Fatalln("create file: ", err)
+	}
+	err = typesTemplate.Execute(f, r)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
 func buildRoutes(r Routes, c Config) {
 	var routesTemplate *template.Template
 	routesTemplate = template.Must(
@@ -95,6 +110,7 @@ func main() {
 	ensureServerDirectory(config.Location)
 	buildServer(config)
 	buildTypes(routes, config)
+	buildJSONTypes(routes, config)
 	buildRoutes(routes, config)
 	buildHandlers(routes, config)
 	buildValidations(routes, config)
