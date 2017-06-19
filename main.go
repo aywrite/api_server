@@ -3,15 +3,23 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"text/template"
 )
+
+func ensureServerDirectory(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return os.MkdirAll(path, os.ModePerm)
+	}
+	return nil
+}
 
 func buildServer(c Config) {
 	var serverTemplate *template.Template
 	serverTemplate = template.Must(
 		template.ParseFiles("./templates/ServerTemplate.go"),
 	)
-	f, err := os.Create("../apiServer/server.go")
+	f, err := os.Create(filepath.Join(c.Location, "/server.go"))
 	if err != nil {
 		log.Fatalln("create file: ", err)
 	}
@@ -21,12 +29,12 @@ func buildServer(c Config) {
 	}
 }
 
-func buildTypes(r Routes) {
+func buildTypes(r Routes, c Config) {
 	var typesTemplate *template.Template
 	typesTemplate = template.Must(
 		template.ParseFiles("./templates/TypesTemplate.go"),
 	)
-	f, err := os.Create("../apiServer/types.go")
+	f, err := os.Create(filepath.Join(c.Location, "/types.go"))
 	if err != nil {
 		log.Fatalln("create file: ", err)
 	}
@@ -36,12 +44,12 @@ func buildTypes(r Routes) {
 	}
 }
 
-func buildRoutes(r Routes) {
+func buildRoutes(r Routes, c Config) {
 	var routesTemplate *template.Template
 	routesTemplate = template.Must(
 		template.ParseFiles("./templates/RoutesTemplate.go"),
 	)
-	f, err := os.Create("../apiServer/routes.go")
+	f, err := os.Create(filepath.Join(c.Location, "/routes.go"))
 	if err != nil {
 		log.Fatalln("create file: ", err)
 	}
@@ -51,12 +59,12 @@ func buildRoutes(r Routes) {
 	}
 }
 
-func buildHandlers(r Routes) {
+func buildHandlers(r Routes, c Config) {
 	var handlersTemplate *template.Template
 	handlersTemplate = template.Must(
 		template.ParseFiles("./templates/HandlersTemplate.go"),
 	)
-	f, err := os.Create("../apiServer/handlers.go")
+	f, err := os.Create(filepath.Join(c.Location, "/handlers.go"))
 	if err != nil {
 		log.Fatalln("create file: ", err)
 	}
@@ -66,12 +74,12 @@ func buildHandlers(r Routes) {
 	}
 }
 
-func buildValidations(r Routes) {
+func buildValidations(r Routes, c Config) {
 	var validationsTemplate *template.Template
 	validationsTemplate = template.Must(
 		template.ParseFiles("./templates/ValidationsTemplate.go"),
 	)
-	f, err := os.Create("../apiServer/validations.go")
+	f, err := os.Create(filepath.Join(c.Location, "/validations.go"))
 	if err != nil {
 		log.Fatalln("create file: ", err)
 	}
@@ -84,9 +92,10 @@ func buildValidations(r Routes) {
 func main() {
 	config := ParseConfig()
 	routes := ParseRoutes()
+	ensureServerDirectory(config.Location)
 	buildServer(config)
-	buildTypes(routes)
-	buildRoutes(routes)
-	buildHandlers(routes)
-	buildValidations(routes)
+	buildTypes(routes, config)
+	buildRoutes(routes, config)
+	buildHandlers(routes, config)
+	buildValidations(routes, config)
 }
